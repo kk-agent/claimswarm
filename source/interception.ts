@@ -1,48 +1,63 @@
 import {
-  InterceptionHandler,
-  type AgentEvent,
-  type InterceptionResult,
-} from "@mozaik-ai/core";
-import type { ClaimswarmState } from "./state.js";
+	type ExecutableTransition,
+	type InferenceInput,
+	type InterceptionHandler,
+	type ModelMessageItem,
+} from '@mozaik-ai/core';
 
-const OVERCONFIDENT = /\b(settled|proven beyond doubt)\b/i;
+const RISKY_PHRASES = [
+	'settled',
+	'proven beyond doubt',
+	'case closed',
+	'100% certain',
+	'no remaining uncertainty',
+];
 
-export class ClaimswarmInterceptor extends InterceptionHandler {
-  constructor(private readonly state: ClaimswarmState) {
-    super();
-  }
+export function isOverconfidentText(text: string): boolean {
+	const lower = text.toLowerCase();
+	return RISKY_PHRASES.some(phrase => lower.includes(phrase));
+}
 
-  override canHandle(event: AgentEvent): boolean {
-    return event.kind === "model_message";
-  }
+function answerText(transition: ExecutableTransition): string {
+	if (transition.nextStateId !== 'model_message') {
+		return '';
+	}
 
-  override handle(event: AgentEvent): InterceptionResult {
-    if (event.kind !== "model_message") {
-      return { action: "pass" };
-    }
-    const text = event.message.content
-      .map((part) => ("text" in part ? part.text : ""))
-      .join(" ");
-    if (!OVERCONFIDENT.test(text)) {
-      return { action: "pass" };
-    }
-    this.state.markInterception(
-      `Rewrote overconfident ${event.agent.name} draft so the swarm keeps arguing.`,
-    );
-    return {
-      action: "rewrite",
-      event: {
-        kind: "message_received",
-        message: {
-          ...event.message,
-          content: [
-            {
-              type: "text",
-              text: `${event.agent.name} drafted an overconfident close ("settled" / "proven beyond doubt"). Keep the disagreement live and finish your stance tool.`,
-            },
-          ],
-        },
-      },
-    };
-  }
+	const {answer} = transition.input as {answer: ModelMessageItem};
+	return answer.content?.text ?? '';
+}
+
+/**
+ * Mid-loop policy participant: rewrite an overconfident model_message
+ * back to message_received so the agent must infer again.
+ * This is a real InterceptionHandler, not a comment.
+ */
+export function createPolicyInterceptor(inferenceInput: InferenceInput): InterceptionHandler {
+	let intercepted = false;
+
+	return {
+		isSatisfiedBy(transition: ExecutableTransition): boolean {
+			if (intercepted || transition.nextStateId !== 'model_message') {
+				return false;
+			}
+
+			return isOverconfidentText(answerText(transition));
+		},
+		async handle(transition: ExecutableTransition): Promise<ExecutableTransition> {
+			intercepted = true;
+			const blocked = answerText(transition);
+			return {
+				nextStateId: 'message_received',
+				input: {
+					content: [
+						'Sentry intercepted an overconfident settlement before it became the answer.',
+						'Do not declare the claim settled, proven beyond doubt, or 100% certain.',
+						'Write a cautious synthesis that keeps competing hypotheses open.',
+						`Blocked text: ${blocked}`,
+					].join(' '),
+					input: inferenceInput,
+				},
+			};
+		},
+	};
 }

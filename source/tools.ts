@@ -1,60 +1,75 @@
-import { defineTool } from "@mozaik-ai/core";
-import { z } from "zod";
-import { searchCorpus } from "./corpus.js";
-import type { ClaimswarmState, Stance } from "./state.js";
+import {type Tool} from '@mozaik-ai/core';
+import {searchCorpus} from './corpus.js';
+import {type Stance} from './state.js';
 
-function stanceFromName(name: string): Stance | undefined {
-  switch (name) {
-    case "Steelman":
-      return "steelman";
-    case "Redteam":
-      return "redteam";
-    case "Contextualist":
-      return "context";
-    default:
-      return undefined;
-  }
+function asStance(value: unknown): Stance | undefined {
+	if (value === 'support' || value === 'refute' || value === 'context') {
+		return value;
+	}
+
+	return undefined;
 }
 
-export function createStanceTool(state: ClaimswarmState) {
-  return defineTool({
-    name: "record_stance",
-    description:
-      "Record this agent's stance and a short evidence note from the local public-finding corpus.",
-    parameters: z.object({
-      stance: z.enum(["steelman", "redteam", "context"]),
-      note: z.string().min(8),
-    }),
-    execute: async (args, ctx) => {
-      const stance = stanceFromName(ctx.agent.name) ?? args.stance;
-      const hits = searchCorpus(state.claim, 2);
-      const evidence = hits.map((hit) => `${hit.title}: ${hit.excerpt}`);
-      state.recordFinding({
-        agent: ctx.agent.name,
-        stance,
-        note: args.note,
-        evidence,
-      });
-      return {
-        recorded: true,
-        agent: ctx.agent.name,
-        stance,
-        evidence,
-      };
-    },
-  });
-}
-
-export function createAuditTool(state: ClaimswarmState) {
-  return defineTool({
-    name: "file_audit",
-    description: "File a short process audit of concurrent coverage after Scout leaves.",
-    parameters: z.object({
-      verdict: z.string().min(8),
-    }),
-    execute: async (args, ctx) => {
-      state.appendAudit(`${ctx.agent.name}: ${args.verdict}`);
-      return { audited: true };
-    },
-  });
-}
+export const investigationTools: Tool[] = [
+	{
+		type: 'function',
+		name: 'cite_evidence',
+		description:
+			'Search the local evidence corpus and return matching public findings. Use this before arguing.',
+		strict: true,
+		parameters: {
+			type: 'object',
+			properties: {
+				query: {
+					type: 'string',
+					description: 'Keywords to search (productivity, Ctrip, meetings, occupation, …)',
+				},
+				stance: {
+					type: 'string',
+					enum: ['support', 'refute', 'context'],
+					description: 'Optional filter for the hypothesis this agent is testing',
+				},
+			},
+			required: ['query'],
+			additionalProperties: false,
+		},
+		invoke: async (args: {query: string; stance?: string}) => {
+			const stance = asStance(args.stance);
+			const matches = searchCorpus(args.query, stance);
+			const hits = matches.length > 0 ? matches : searchCorpus(args.query);
+			return {
+				query: args.query,
+				count: hits.length,
+				hits: hits.map(record => ({
+					id: record.id,
+					stance: record.stance,
+					source: record.source,
+					excerpt: record.excerpt,
+				})),
+			};
+		},
+	},
+	{
+		type: 'function',
+		name: 'publish_verdict',
+		description:
+			'Publish a final verdict on the claim. Only use when competing evidence has been weighed. Overconfident verdicts are intercepted.',
+		strict: true,
+		parameters: {
+			type: 'object',
+			properties: {
+				verdict: {type: 'string', description: 'One-sentence verdict'},
+				confidence: {type: 'number', description: '0–1 confidence'},
+			},
+			required: ['verdict', 'confidence'],
+			additionalProperties: false,
+		},
+		invoke: async (args: {verdict: string; confidence: number}) => {
+			return {
+				published: true,
+				verdict: args.verdict,
+				confidence: args.confidence,
+			};
+		},
+	},
+];

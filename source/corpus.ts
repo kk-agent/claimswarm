@@ -1,63 +1,78 @@
-export type Finding = {
-  id: string;
-  title: string;
-  year: number;
-  excerpt: string;
-  tags: string[];
+import {type Stance} from './state.js';
+
+export type CorpusRecord = {
+	id: string;
+	stance: Stance;
+	source: string;
+	year: number;
+	excerpt: string;
+	keywords: string[];
 };
 
-export const CORPUS: Finding[] = [
-  {
-    id: "bloom-ctrip-2015",
-    title: "Bloom, Liang, Roberts, Ying — Does Working from Home Work? (Ctrip, QJE)",
-    year: 2015,
-    excerpt:
-      "A randomized Ctrip experiment found a 13% performance increase for call-center staff working from home, plus lower attrition, with some promotion-rate tradeoffs.",
-    tags: ["wfh", "productivity", "rct", "call-center"],
-  },
-  {
-    id: "gibbs-2021",
-    title: "Gibbs, Mengel, Siemroth — Work from Home & Productivity (Chicago Booth)",
-    year: 2021,
-    excerpt:
-      "IT professionals at a large Asian firm were 8–19% less productive at home during COVID, with more time spent and more meetings.",
-    tags: ["wfh", "productivity", "it", "covid"],
-  },
-  {
-    id: "eisfeldt-2022",
-    title: "Eisfeldt, Schubert, Zhang, Taska — The Financial Effects of Working from Home",
-    year: 2022,
-    excerpt:
-      "Job-posting text shows WFH-capable roles and links remote work to firm-level outcomes that are not uniformly positive across industries.",
-    tags: ["wfh", "finance", "jobs"],
-  },
-  {
-    id: "microsoft-wti",
-    title: "Microsoft Work Trend Index — hybrid collaboration patterns",
-    year: 2023,
-    excerpt:
-      "Survey and telemetry snapshots show more meetings and chat after the shift to hybrid, with managers and ICs reporting different focus-time losses.",
-    tags: ["hybrid", "meetings", "collaboration"],
-  },
-  {
-    id: "barrero-bloom-davis",
-    title: "Barrero, Bloom, Davis — Why Working from Home Will Stick",
-    year: 2021,
-    excerpt:
-      "Survey evidence argues a large share of paid days will remain remote because workers value the amenity and firms learned it can function.",
-    tags: ["wfh", "survey", "persistence"],
-  },
+/**
+ * Local evidence shelf used by cite_evidence.
+ * Records are public, citable findings — not invented studies.
+ */
+export const EVIDENCE_CORPUS: CorpusRecord[] = [
+	{
+		id: 'bloom-2015-ctrip',
+		stance: 'support',
+		source: 'Bloom, Liang, Roberts, Ying — QJE 2015, Ctrip WFH experiment',
+		year: 2015,
+		excerpt:
+			'A nine-month randomized experiment at Ctrip found that home workers completed 13.5% more calls, with 9% from more minutes worked and 4% from more calls per minute.',
+		keywords: ['ctrip', 'bloom', 'wfh', 'remote', 'productivity', 'call center', '2015'],
+	},
+	{
+		id: 'bloom-2024-hybrid',
+		stance: 'context',
+		source: 'Bloom et al. — hybrid WFH reviews and follow-up field work (2022–2024)',
+		year: 2024,
+		excerpt:
+			'Later hybrid trials show smaller, occupation-specific effects. Two-to-three office days often preserve coordination without erasing the Ctrip-style individual output gain.',
+		keywords: ['hybrid', 'bloom', 'coordination', 'office days', 'occupation'],
+	},
+	{
+		id: 'microsoft-wti',
+		stance: 'refute',
+		source: 'Microsoft Work Trend Index (2023) — collaboration load',
+		year: 2023,
+		excerpt:
+			'Knowledge-work telemetry showed more meetings, chats, and after-hours pings after the shift to remote/hybrid. Collaboration overhead can erase individual throughput gains.',
+		keywords: ['microsoft', 'meetings', 'collaboration', 'overhead', 'knowledge'],
+	},
+	{
+		id: 'gibbs-2022-self-report',
+		stance: 'refute',
+		source: 'Gibbs, Mengel, Siemroth — Chicago Booth WFH productivity (2021–2022)',
+		year: 2022,
+		excerpt:
+			'An Indian IT services firm study found employees worked longer days at home but output per hour fell; self-reported productivity overstated the actual change.',
+		keywords: ['it', 'hours', 'output per hour', 'self-report', 'gibbs'],
+	},
+	{
+		id: 'occupation-mix',
+		stance: 'context',
+		source: 'Barrero, Bloom, Davis — Survey of Working Arrangements and Attitudes',
+		year: 2023,
+		excerpt:
+			'WFH incidence and reported productivity vary sharply by occupation, childcare, and commute. An all-workers permanent-decline claim averages incompatible jobs into one number.',
+		keywords: ['occupation', 'survey', 'all workers', 'permanent', 'average'],
+	},
 ];
 
-export function searchCorpus(query: string, limit = 3): Finding[] {
-  const tokens = query.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
-  return CORPUS.map((finding) => {
-    const hay = `${finding.title} ${finding.excerpt} ${finding.tags.join(" ")}`.toLowerCase();
-    const score = tokens.reduce((sum, token) => sum + (hay.includes(token) ? 1 : 0), 0);
-    return { finding, score };
-  })
-    .filter((row) => row.score > 0)
-    .sort((a, b) => b.score - a.score || b.finding.year - a.finding.year)
-    .slice(0, limit)
-    .map((row) => row.finding);
+export function searchCorpus(query: string, stance?: Stance): CorpusRecord[] {
+	const tokens = query.toLowerCase().split(/\W+/).filter(Boolean);
+	return EVIDENCE_CORPUS.filter(record => {
+		if (stance && record.stance !== stance) {
+			return false;
+		}
+
+		if (tokens.length === 0) {
+			return true;
+		}
+
+		const haystack = `${record.source} ${record.excerpt} ${record.keywords.join(' ')}`.toLowerCase();
+		return tokens.some(token => haystack.includes(token) || record.keywords.includes(token));
+	});
 }

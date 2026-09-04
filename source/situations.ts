@@ -1,37 +1,66 @@
-import type { Runtime } from "@mozaik-ai/core";
-import type { ClaimswarmState } from "./state.js";
+import {type SituationContext, SituationSpecification} from '@mozaik-ai/core';
 
-const SPECIALISTS = new Set(["Steelman", "Redteam", "Contextualist"]);
-
-export function installSentryWatch(runtime: Runtime, state: ClaimswarmState) {
-  runtime.subscribe((event) => {
-    if (event.kind !== "function_call.started") return;
-    if (!SPECIALISTS.has(event.agent.name)) return;
-    if (state.sentryNote) return;
-    state.markSentry(
-      `Sentry saw ${event.agent.name} enter ${event.functionCall.name} while other specialists are still in-loop.`,
-    );
-  });
+export class WhenOthersSendAMessage extends SituationSpecification {
+	isSatisfiedBy({event, participant}: SituationContext): boolean {
+		return event.type === 'message.sent' && event.producerId !== participant.getId();
+	}
 }
 
-export function installSynthesisBoard(runtime: Runtime, state: ClaimswarmState) {
-  runtime.subscribe((event) => {
-    if (event.kind !== "function_call.completed") return;
-    if (!SPECIALISTS.has(event.agent.name)) return;
-    const latest = state.snapshot().findings.at(-1);
-    if (!latest) return;
-    state.setBoard(`${latest.agent} posted a ${latest.stance} note; board still open.`);
-  });
+export class WhenFunctionCallStarted extends SituationSpecification {
+	isSatisfiedBy({event, participant}: SituationContext): boolean {
+		return event.type === 'function_call.started' && event.producerId !== participant.getId();
+	}
 }
 
-export function installHumanInjection(runtime: Runtime, state: ClaimswarmState) {
-  runtime.subscribe((event) => {
-    if (event.kind !== "message.sent") return;
-    if (event.agent.name !== "Human") return;
-    const text = event.message.content
-      .map((part) => ("text" in part ? part.text : ""))
-      .join(" ");
-    if (text.trim().length === 0) return;
-    state.injectHuman(text);
-  });
+export class WhenFunctionCallCompleted extends SituationSpecification {
+	isSatisfiedBy({event, participant}: SituationContext): boolean {
+		return event.type === 'function_call.completed' && event.producerId !== participant.getId();
+	}
+}
+
+export class WhenModelAnswers extends SituationSpecification {
+	isSatisfiedBy({event, participant}: SituationContext): boolean {
+		return event.type === 'model.answer' && event.producerId !== participant.getId();
+	}
+}
+
+export class WhenInferenceStarted extends SituationSpecification {
+	isSatisfiedBy({event}: SituationContext): boolean {
+		return event.type === 'inference.started';
+	}
+}
+
+export class WhenInferenceCompleted extends SituationSpecification {
+	isSatisfiedBy({event}: SituationContext): boolean {
+		return event.type === 'inference.completed';
+	}
+}
+
+export class WhenInterceptionFires extends SituationSpecification {
+	isSatisfiedBy({event}: SituationContext): boolean {
+		return event.type === 'interception.started' || event.type === 'interception.finished';
+	}
+}
+
+export class WhenParticipantJoined extends SituationSpecification {
+	isSatisfiedBy({event}: SituationContext): boolean {
+		return event.type === 'participant.joined';
+	}
+}
+
+export class WhenParticipantLeft extends SituationSpecification {
+	isSatisfiedBy({event}: SituationContext): boolean {
+		return event.type === 'participant.left';
+	}
+}
+
+export class WhenIJoined extends SituationSpecification {
+	isSatisfiedBy({event, participant}: SituationContext): boolean {
+		if (event.type !== 'participant.joined') {
+			return false;
+		}
+
+		const payload = event.payload as {id?: string};
+		return payload.id === participant.getId();
+	}
 }

@@ -1,31 +1,86 @@
-import { createHuman, type Runtime } from "@mozaik-ai/core";
-import { getLogger } from "./agents/logger.js";
-import { createCoordinator } from "./agents/coordinator.js";
-import { createSentry } from "./agents/sentry.js";
-import { createSpecialists } from "./agents/specialists.js";
-import { createSynthesizer } from "./agents/synthesizer.js";
-import { createClaimswarmState } from "./state.js";
-import type { ClaimswarmState } from "./state.js";
-import { installHumanInjection, installSentryWatch, installSynthesisBoard } from "./situations.js";
-import { attachOverlapRecorder, type OverlapProof } from "./overlap.js";
+import {type InferenceRunner, createHuman} from '@mozaik-ai/core';
+import {createCoordinator, spawnAuditor} from './agents/coordinator.js';
+import {createEventLogger} from './agents/logger.js';
+import {createSentry} from './agents/sentry.js';
+import {createSpecialist} from './agents/specialists.js';
+import {createSynthesizer} from './agents/synthesizer.js';
+import {type ClaimswarmRuntime, createClaimswarmRuntime} from './runtime.js';
+import {SimulatedInferenceRunner} from './simulation/inference-runner.js';
+import {ClaimswarmState} from './state.js';
+
+export type SwarmMode = 'sim' | 'live';
 
 export type ClaimswarmSession = {
-  runtime: Runtime;
-  state: ClaimswarmState;
-  overlap: OverlapProof;
+	runtime: ClaimswarmRuntime;
+	state: ClaimswarmState;
+	send: (message: string) => void;
+	leaveScout: () => void;
+	userId: string;
 };
 
-export function bootstrapSession(runtime: Runtime): ClaimswarmSession {
-  const state = createClaimswarmState();
-  const overlap = attachOverlapRecorder(runtime, state);
-  getLogger(runtime);
-  createSpecialists(runtime, state);
-  createSentry(runtime, state);
-  createSynthesizer(runtime, state);
-  createCoordinator(runtime, state);
-  createHuman(runtime, { name: "Human" });
-  installSentryWatch(runtime, state);
-  installSynthesisBoard(runtime, state);
-  installHumanInjection(runtime, state);
-  return { runtime, state, overlap };
+export function hasLiveKey(): boolean {
+	return Boolean(process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.trim().length > 0);
+}
+
+export function resolveMode(requested?: SwarmMode): SwarmMode {
+	if (requested === 'live') {
+		if (!hasLiveKey()) {
+			throw new Error('OPENAI_API_KEY is required for live mode');
+		}
+
+		return 'live';
+	}
+
+	if (requested === 'sim') {
+		return 'sim';
+	}
+
+	return hasLiveKey() ? 'live' : 'sim';
+}
+
+export function createClaimswarmSession(requested?: SwarmMode): ClaimswarmSession {
+	const mode = resolveMode(requested);
+	const runtime = createClaimswarmRuntime();
+	const state = new ClaimswarmState();
+	state.mode = mode;
+	state.startedAt = Date.now();
+
+	const runner: InferenceRunner | undefined =
+		mode === 'sim' ? new SimulatedInferenceRunner() : undefined;
+	runtime.initializeRuntime({
+		state,
+		inferenceRunnerConfig: runner ? {runner} : undefined,
+	});
+
+	const user = createHuman({name: 'Operator', capabilities: ['input'], handlers: []});
+	const scout = createHuman({name: 'Scout', capabilities: ['transient'], handlers: []});
+	const coordinator = createCoordinator(runtime, () => {
+		spawnAuditor(runtime);
+	});
+
+	runtime.join(coordinator);
+	runtime.join(createEventLogger(runtime));
+	runtime.join(createSentry(runtime));
+	runtime.join(createSynthesizer(runtime));
+	runtime.join(user);
+	runtime.join(createSpecialist(runtime, 'steelman'));
+	runtime.join(createSpecialist(runtime, 'redteam'));
+	runtime.join(createSpecialist(runtime, 'contextualist'));
+	runtime.join(scout);
+
+	return {
+		runtime,
+		state,
+		userId: user.getId(),
+		send: (message: string) => {
+			if (!state.claim) {
+				state.setClaim(message);
+			}
+
+			runtime.sendMessage(message, user.getId());
+		},
+		leaveScout: () => {
+			runtime.leave(scout);
+		},
+	};
 }

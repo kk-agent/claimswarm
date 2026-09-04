@@ -1,44 +1,80 @@
-import type { Runtime } from "@mozaik-ai/core";
-import type { ClaimswarmState } from "./state.js";
-
-const SPECIALISTS = new Set(["Steelman", "Redteam", "Contextualist"]);
+import {type SwarmEvent} from './state.js';
 
 export type OverlapProof = {
-  starts: Array<{ agent: string; atMs: number }>;
-  completes: Array<{ agent: string; atMs: number }>;
+	ok: boolean;
+	specialists: string[];
+	thirdStartMs: number | null;
+	firstCompleteMs: number | null;
+	reason: string;
 };
 
-export function attachOverlapRecorder(runtime: Runtime, state: ClaimswarmState): OverlapProof {
-  const proof: OverlapProof = { starts: [], completes: [] };
-  const origin = Date.now();
+const SPECIALISTS = new Set(['Steelman', 'Redteam', 'Contextualist', 'Auditor']);
 
-  runtime.subscribe((event) => {
-    if (event.kind === "function_call.started" && SPECIALISTS.has(event.agent.name)) {
-      proof.starts.push({ agent: event.agent.name, atMs: Date.now() - origin });
-    }
-    if (event.kind === "function_call.completed" && SPECIALISTS.has(event.agent.name)) {
-      proof.completes.push({ agent: event.agent.name, atMs: Date.now() - origin });
-    }
-    if (event.kind === "agent.left" && event.agent.name === "Scout") {
-      state.appendAudit("Scout left; Coordinator will join Auditor on the same runtime.");
-    }
-  });
+/**
+ * Concurrency proof: three distinct investigators published inference.started
+ * before the first of those inferences completed. A join-and-wait pipeline
+ * cannot satisfy this.
+ */
+export function proveOverlap(events: SwarmEvent[]): OverlapProof {
+	const starts = events.filter(
+		event => event.type === 'inference.started' && SPECIALISTS.has(event.producer),
+	);
+	const seen = new Set<string>();
+	const firstStarts: SwarmEvent[] = [];
+	for (const event of starts) {
+		if (seen.has(event.producer)) {
+			continue;
+		}
 
-  return proof;
-}
+		seen.add(event.producer);
+		firstStarts.push(event);
+		if (firstStarts.length === 3) {
+			break;
+		}
+	}
 
-export function summarizeOverlap(proof: OverlapProof) {
-  const firstComplete = proof.completes[0];
-  const lastStart = proof.starts.at(-1);
-  const overlapping =
-    proof.starts.length >= 2 &&
-    Boolean(firstComplete && lastStart && lastStart.atMs < firstComplete.atMs);
-  return {
-    starts: proof.starts,
-    completes: proof.completes,
-    overlapping,
-    detail: overlapping
-      ? `Last specialist start (+${lastStart?.atMs}ms) happened before first specialist complete (+${firstComplete?.atMs}ms).`
-      : "Specialist starts did not overlap a still-open function call.",
-  };
+	if (firstStarts.length < 3) {
+		return {
+			ok: false,
+			specialists: firstStarts.map(event => event.producer),
+			thirdStartMs: null,
+			firstCompleteMs: null,
+			reason: `only ${firstStarts.length} specialist inference.started events`,
+		};
+	}
+
+	const names = new Set(firstStarts.map(event => event.producer));
+	const thirdStartMs = Math.max(...firstStarts.map(event => event.ms));
+	const completes = events.filter(
+		event => event.type === 'inference.completed' && names.has(event.producer),
+	);
+	const firstCompleteMs = completes.length > 0 ? Math.min(...completes.map(event => event.ms)) : null;
+
+	if (firstCompleteMs === null) {
+		return {
+			ok: true,
+			specialists: [...names],
+			thirdStartMs,
+			firstCompleteMs: null,
+			reason: 'three inference.started events and none of those loops have completed yet',
+		};
+	}
+
+	if (thirdStartMs < firstCompleteMs) {
+		return {
+			ok: true,
+			specialists: [...names],
+			thirdStartMs,
+			firstCompleteMs,
+			reason: `third start at +${thirdStartMs}ms is before first complete at +${firstCompleteMs}ms`,
+		};
+	}
+
+	return {
+		ok: false,
+		specialists: [...names],
+		thirdStartMs,
+		firstCompleteMs,
+		reason: `third start (+${thirdStartMs}ms) was not before first complete (+${firstCompleteMs}ms)`,
+	};
 }
