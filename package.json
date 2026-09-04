@@ -1,0 +1,36 @@
+{
+	"name": "claimswarm",
+	"version": "1.0.0",
+	"description": "Claimswarm — concurrent multi-agent claim investigation for the Mozaik Hackathon 2026",
+	"license": "MIT",
+	"bin": "dist/cli.js",
+	"type": "module",
+	"engines": {
+		"node": ">=18"
+	},
+	"scripts": {
+		"build": "tsc",
+		"start": "tsx source/cli.tsx",
+		"demo": "tsx source/demo.ts",
+		"test": "tsx --test tests/*.test.ts"
+	},
+	"files": [
+		"dist",
+		"source",
+		"README.md"
+	],
+	"dependencies": {
+		"@mozaik-ai/core": "^4.0.5",
+		"dotenv": "^17.4.2",
+		"ink": "^4.1.0",
+		"ink-text-input": "^5.0.1",
+		"meow": "^11.0.0",
+		"react": "^18.2.0"
+	},
+	"devDependencies": {
+		"@types/node": "^22.13.10",
+		"@types/react": "^18.0.32",
+		"tsx": "^4.20.5",
+		"typescript": "^5.8.2"
+	}
+}
