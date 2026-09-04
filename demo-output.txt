@@ -1,0 +1,125 @@
+
+> claimswarm@1.0.0 demo
+> tsx source/demo.ts
+
+Claimswarm dry-run (SimulatedInferenceRunner, no API key)
+Claim: Remote work permanently reduces productivity for all knowledge workers.
+Joined: Coordinator, EventLog, Sentry, Synthesizer, Operator, Steelman, Redteam, Contextualist, Scout
+mozaik cloud: no API key — telemetry disabled. Set MOZAIK_API_KEY, or run `npx @mozaik-ai/cloud-sdk pair` to connect this machine.
+mozaik cloud: no API key — telemetry disabled. Set MOZAIK_API_KEY, or run `npx @mozaik-ai/cloud-sdk pair` to connect this machine.
+mozaik cloud: no API key — telemetry disabled. Set MOZAIK_API_KEY, or run `npx @mozaik-ai/cloud-sdk pair` to connect this machine.
+mozaik cloud: no API key — telemetry disabled. Set MOZAIK_API_KEY, or run `npx @mozaik-ai/cloud-sdk pair` to connect this machine.
+mozaik cloud: no API key — telemetry disabled. Set MOZAIK_API_KEY, or run `npx @mozaik-ai/cloud-sdk pair` to connect this machine.
+mozaik cloud: no API key — telemetry disabled. Set MOZAIK_API_KEY, or run `npx @mozaik-ai/cloud-sdk pair` to connect this machine.
+mozaik cloud: no API key — telemetry disabled. Set MOZAIK_API_KEY, or run `npx @mozaik-ai/cloud-sdk pair` to connect this machine.
+
+── Timestamped event log ──
+[2026-09-04T17:04:05.216Z] +   0ms  participant.joined       Coordinator    human
+[2026-09-04T17:04:05.216Z] +   0ms  participant.joined       EventLog       human
+[2026-09-04T17:04:05.216Z] +   0ms  participant.joined       Sentry         human
+[2026-09-04T17:04:05.216Z] +   0ms  participant.joined       Synthesizer    human
+[2026-09-04T17:04:05.216Z] +   0ms  participant.joined       Operator       human
+[2026-09-04T17:04:05.216Z] +   0ms  participant.joined       Steelman       agent
+[2026-09-04T17:04:05.217Z] +   1ms  participant.joined       Redteam        agent
+[2026-09-04T17:04:05.217Z] +   1ms  participant.joined       Contextualist  agent
+[2026-09-04T17:04:05.217Z] +   1ms  participant.joined       Scout          human
+[2026-09-04T17:04:05.217Z] +   1ms  message.sent             Operator       Remote work permanently reduces productivity for all knowledge workers.
+[2026-09-04T17:04:05.218Z] +   2ms  inference.started        Steelman       inference.started
+[2026-09-04T17:04:05.219Z] +   3ms  inference.started        Redteam        inference.started
+[2026-09-04T17:04:05.219Z] +   3ms  inference.started        Contextualist  inference.started
+[2026-09-04T17:04:05.243Z] +  27ms  inference.completed      Steelman       inference.completed
+[2026-09-04T17:04:05.243Z] +  27ms  function_call.started    Steelman       cite_evidence
+[2026-09-04T17:04:05.243Z] +  27ms  sentry.reacted           Sentry         Steelman.cite_evidence — reacting before that loop finishes
+[2026-09-04T17:04:05.243Z] +  27ms  board.noticed            Synthesizer    Steelman called cite_evidence — board opening a slot
+[2026-09-04T17:04:05.244Z] +  28ms  function_call.completed  Steelman       function_call.completed
+[2026-09-04T17:04:05.244Z] +  28ms  board.updated            Synthesizer    Steelman evidence: Bloom, Liang, Roberts, Ying — QJE 2015, Ctrip WFH experiment
+[2026-09-04T17:04:05.244Z] +  28ms  inference.started        Steelman       inference.started
+[2026-09-04T17:04:05.250Z] +  34ms  message.sent             Operator       Mid-run inject: weigh the 2015 Ctrip RCT before anyone settles.
+[2026-09-04T17:04:05.251Z] +  35ms  participant.left         Scout          slot opened
+[2026-09-04T17:04:05.251Z] +  35ms  participant.joined       Auditor        agent
+[2026-09-04T17:04:05.251Z] +  35ms  reassignment             Coordinator    Scout left — Auditor join()s the same runtime
+[2026-09-04T17:04:05.251Z] +  35ms  inference.started        Steelman       inference.started
+[2026-09-04T17:04:05.251Z] +  35ms  inference.started        Redteam        inference.started
+[2026-09-04T17:04:05.251Z] +  35ms  inference.started        Contextualist  inference.started
+[2026-09-04T17:04:05.251Z] +  35ms  inference.started        Auditor        inference.started
+[2026-09-04T17:04:05.268Z] +  52ms  inference.completed      Steelman       inference.completed
+[2026-09-04T17:04:05.269Z] +  53ms  interception.started     Steelman       interception.started
+[2026-09-04T17:04:05.269Z] +  53ms  interception.started     Steelman       policy interceptor rewrote the pending transition
+[2026-09-04T17:04:05.269Z] +  53ms  interception.finished    Steelman       interception.finished
+[2026-09-04T17:04:05.269Z] +  53ms  interception.finished    Steelman       policy interceptor rewrote the pending transition
+[2026-09-04T17:04:05.269Z] +  53ms  inference.started        Steelman       inference.started
+[2026-09-04T17:04:05.274Z] +  58ms  inference.completed      Redteam        inference.completed
+[2026-09-04T17:04:05.274Z] +  58ms  function_call.started    Redteam        cite_evidence
+[2026-09-04T17:04:05.274Z] +  58ms  sentry.reacted           Sentry         Redteam.cite_evidence — reacting before that loop finishes
+[2026-09-04T17:04:05.274Z] +  58ms  board.noticed            Synthesizer    Redteam called cite_evidence — board opening a slot
+[2026-09-04T17:04:05.274Z] +  58ms  function_call.completed  Redteam        function_call.completed
+[2026-09-04T17:04:05.274Z] +  58ms  board.updated            Synthesizer    Redteam evidence: Microsoft Work Trend Index (2023) — collaboration load
+[2026-09-04T17:04:05.274Z] +  58ms  inference.started        Redteam        inference.started
+[2026-09-04T17:04:05.276Z] +  60ms  inference.completed      Steelman       inference.completed
+[2026-09-04T17:04:05.276Z] +  60ms  interception.started     Steelman       interception.started
+[2026-09-04T17:04:05.276Z] +  60ms  interception.started     Steelman       policy interceptor rewrote the pending transition
+[2026-09-04T17:04:05.276Z] +  60ms  interception.finished    Steelman       interception.finished
+[2026-09-04T17:04:05.276Z] +  60ms  interception.finished    Steelman       policy interceptor rewrote the pending transition
+[2026-09-04T17:04:05.276Z] +  60ms  inference.started        Steelman       inference.started
+[2026-09-04T17:04:05.292Z] +  76ms  inference.completed      Auditor        inference.completed
+[2026-09-04T17:04:05.292Z] +  76ms  function_call.started    Auditor        cite_evidence
+[2026-09-04T17:04:05.292Z] +  76ms  sentry.reacted           Sentry         Auditor.cite_evidence — reacting before that loop finishes
+[2026-09-04T17:04:05.292Z] +  76ms  board.noticed            Synthesizer    Auditor called cite_evidence — board opening a slot
+[2026-09-04T17:04:05.292Z] +  76ms  function_call.completed  Auditor        function_call.completed
+[2026-09-04T17:04:05.292Z] +  76ms  board.updated            Synthesizer    Auditor evidence: Bloom et al. — hybrid WFH reviews and follow-up field work (2022–2024)
+[2026-09-04T17:04:05.292Z] +  76ms  inference.started        Auditor        inference.started
+[2026-09-04T17:04:05.294Z] +  78ms  inference.completed      Steelman       inference.completed
+[2026-09-04T17:04:05.294Z] +  78ms  model.answer             Steelman       Support remains: Bloom et al. 2015 (Ctrip) measured a 13.5% output gain. That is one RCT, not a universal law.
+[2026-09-04T17:04:05.294Z] +  78ms  board.answer             Synthesizer    Steelman: Support remains: Bloom et al. 2015 (Ctrip) measured a 13.5% output gain. That is one RCT, not a universal law.
+[2026-09-04T17:04:05.301Z] +  85ms  inference.completed      Steelman       inference.completed
+[2026-09-04T17:04:05.301Z] +  85ms  model.answer             Steelman       Support remains: Bloom et al. 2015 (Ctrip) measured a 13.5% output gain. That is one RCT, not a universal law.
+[2026-09-04T17:04:05.301Z] +  85ms  board.answer             Synthesizer    Steelman: Support remains: Bloom et al. 2015 (Ctrip) measured a 13.5% output gain. That is one RCT, not a universal law.
+[2026-09-04T17:04:05.304Z] +  88ms  inference.completed      Contextualist  inference.completed
+[2026-09-04T17:04:05.304Z] +  88ms  function_call.started    Contextualist  cite_evidence
+[2026-09-04T17:04:05.304Z] +  88ms  sentry.reacted           Sentry         Contextualist.cite_evidence — reacting before that loop finishes
+[2026-09-04T17:04:05.304Z] +  88ms  board.noticed            Synthesizer    Contextualist called cite_evidence — board opening a slot
+[2026-09-04T17:04:05.304Z] +  88ms  function_call.completed  Contextualist  function_call.completed
+[2026-09-04T17:04:05.304Z] +  88ms  board.updated            Synthesizer    Contextualist evidence: Bloom et al. — hybrid WFH reviews and follow-up field work (2022–2024)
+[2026-09-04T17:04:05.304Z] +  88ms  inference.started        Contextualist  inference.started
+[2026-09-04T17:04:05.307Z] +  91ms  inference.completed      Redteam        inference.completed
+[2026-09-04T17:04:05.307Z] +  91ms  function_call.started    Redteam        cite_evidence
+[2026-09-04T17:04:05.307Z] +  91ms  sentry.reacted           Sentry         Redteam.cite_evidence — reacting before that loop finishes
+[2026-09-04T17:04:05.307Z] +  91ms  board.noticed            Synthesizer    Redteam called cite_evidence — board opening a slot
+[2026-09-04T17:04:05.307Z] +  91ms  function_call.completed  Redteam        function_call.completed
+[2026-09-04T17:04:05.307Z] +  91ms  board.updated            Synthesizer    Redteam evidence: Bloom, Liang, Roberts, Ying — QJE 2015, Ctrip WFH experiment
+[2026-09-04T17:04:05.307Z] +  91ms  inference.started        Redteam        inference.started
+
+── Live board (synthesizer, updated as function_call.completed arrived) ──
+• Steelman [support] Bloom, Liang, Roberts, Ying — QJE 2015, Ctrip WFH experiment — A nine-month randomized experiment at Ctrip found that home workers completed 13.5% more calls, with 9% from more minutes worked and 4% from more calls per minute.
+• Redteam [refute] Microsoft Work Trend Index (2023) — collaboration load — Knowledge-work telemetry showed more meetings, chats, and after-hours pings after the shift to remote/hybrid. Collaboration overhead can erase individual throughput gains.
+• Auditor [context] Bloom et al. — hybrid WFH reviews and follow-up field work (2022–2024) — Later hybrid trials show smaller, occupation-specific effects. Two-to-three office days often preserve coordination without erasing the Ctrip-style individual output gain.
+• Contextualist [context] Bloom et al. — hybrid WFH reviews and follow-up field work (2022–2024) — Later hybrid trials show smaller, occupation-specific effects. Two-to-three office days often preserve coordination without erasing the Ctrip-style individual output gain.
+• Redteam [support] Bloom, Liang, Roberts, Ying — QJE 2015, Ctrip WFH experiment — A nine-month randomized experiment at Ctrip found that home workers completed 13.5% more calls, with 9% from more minutes worked and 4% from more calls per minute.
+
+── Sentry flags (including mid-loop InterceptionHandler) ──
+• 2026-09-04T17:04:05.243Z function_call.started Steelman: Steelman started cite_evidence while 2 inference(s) still open
+• 2026-09-04T17:04:05.269Z interception.started Steelman: Aborted overconfident model_message from Steelman
+• 2026-09-04T17:04:05.274Z function_call.started Redteam: Redteam started cite_evidence while 4 inference(s) still open
+• 2026-09-04T17:04:05.276Z interception.started Steelman: Aborted overconfident model_message from Steelman
+• 2026-09-04T17:04:05.292Z function_call.started Auditor: Auditor started cite_evidence while 2 inference(s) still open
+• 2026-09-04T17:04:05.304Z function_call.started Contextualist: Contextualist started cite_evidence while 0 inference(s) still open
+• 2026-09-04T17:04:05.307Z function_call.started Redteam: Redteam started cite_evidence while 0 inference(s) still open
+
+── Model answers after interception ──
+• Steelman: Support remains: Bloom et al. 2015 (Ctrip) measured a 13.5% output gain. That is one RCT, not a universal law.
+• Steelman: Support remains: Bloom et al. 2015 (Ctrip) measured a 13.5% output gain. That is one RCT, not a universal law.
+
+── Overlap proof ──
+{
+  "ok": true,
+  "specialists": [
+    "Steelman",
+    "Redteam",
+    "Contextualist"
+  ],
+  "thirdStartMs": 3,
+  "firstCompleteMs": 27,
+  "reason": "third start at +3ms is before first complete at +27ms"
+}
+
+PASS: three investigators overlapped, Sentry reacted mid-loop, interceptor aborted a settlement.
